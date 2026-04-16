@@ -1,87 +1,71 @@
 package com.paves.resume_analyser.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
+
+import com.paves.resume_analyser.service.ResumeService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/resumes")
+@RequiredArgsConstructor
 public class ResumeController {
 
-    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResumeUploadResponse> uploadResume(
-            @RequestPart(value = "file", required = false) MultipartFile file,
-            @RequestParam(required = false) String targetRole) {
+    private final ResumeService resumeService;
 
-        if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resume file is required");
-        }
-
-        String fileName = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "resume.pdf";
-        ResumeUploadResponse response = buildResponse(fileName, file.getSize(), targetRole);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    /**
+     * Full upload + AI analysis pipeline endpoint.
+     * Accepts a PDF file, uploads to Cloudinary, extracts text, scores with Gemini.
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<?> upload(
+            @RequestParam("file")           MultipartFile file,
+            @RequestParam("candidateName")  String candidateName,
+            @RequestParam("candidateEmail") String candidateEmail,
+            @RequestParam("branchId")       Long branchId,
+            @RequestParam("jobRoleId")      Long jobRoleId
+    ) {
+        return ResponseEntity.ok(
+                resumeService.uploadAndAnalyse(file, candidateName, candidateEmail, branchId, jobRoleId)
+        );
     }
 
-    @GetMapping("/{resumeId}")
-    public ResumePreview getResume(@PathVariable String resumeId) {
-        return new ResumePreview(
-                resumeId,
-                "sample-resume.pdf",
-                "Backend Developer",
-                82,
-                List.of("Java", "Spring Boot", "SQL"),
-                List.of("Docker", "System Design"));
+    /**
+     * Simple create (for quick testing without a file).
+     */
+    @PostMapping
+    public ResponseEntity<?> create(
+            @RequestParam String name,
+            @RequestParam Long branchId,
+            @RequestParam Long jobId
+    ) {
+        return ResponseEntity.ok(resumeService.createResume(name, branchId, jobId));
     }
 
-    private ResumeUploadResponse buildResponse(String fileName, long fileSize, String targetRole) {
-        String normalizedFileName = fileName.toLowerCase();
-        String suggestedRole = StringUtils.hasText(targetRole)
-                ? targetRole.trim()
-                : normalizedFileName.contains("frontend") ? "Frontend Developer" : "Backend Developer";
-
-        int atsScore = normalizedFileName.contains("final") ? 88 : 81;
-
-        return new ResumeUploadResponse(
-                "resume-" + Math.abs(fileName.hashCode()),
-                fileName,
-                fileSize,
-                suggestedRole,
-                atsScore,
-                List.of("Clear project descriptions", "Relevant technical skills"),
-                List.of("Quantified impact", "Cloud deployment experience"),
-                List.of("Backend Developer", "Full Stack Developer", "Software Engineer"));
+    /**
+     * Get all resumes for a branch, ordered by upload date descending.
+     */
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<?> getByBranch(@PathVariable Long branchId) {
+        return ResponseEntity.ok(resumeService.getByBranch(branchId));
     }
 
-    public record ResumeUploadResponse(
-            String resumeId,
-            String fileName,
-            long fileSize,
-            String targetRole,
-            int atsScore,
-            List<String> strengths,
-            List<String> improvementAreas,
-            List<String> recommendedRoles) {
-    }
-
-    public record ResumePreview(
-            String resumeId,
-            String fileName,
-            String targetRole,
-            int atsScore,
-            List<String> matchedSkills,
-            List<String> missingSkills) {
+    /**
+     * Shortlist a resume by ID.
+     */
+    @PatchMapping("/{resumeId}/shortlist")
+    public ResponseEntity<?> shortlist(
+            @PathVariable Long resumeId,
+            @RequestParam(required = false, defaultValue = "") String notes
+    ) {
+        return ResponseEntity.ok(resumeService.shortlist(resumeId, notes));
     }
 }
