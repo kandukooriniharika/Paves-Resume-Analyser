@@ -30,11 +30,19 @@ public class ResumeController {
             @RequestParam("file")           MultipartFile file,
             @RequestParam("candidateName")  String candidateName,
             @RequestParam("candidateEmail") String candidateEmail,
+            @RequestParam(value = "candidatePhone", required = false) String candidatePhone,
             @RequestParam("branchId")       Long branchId,
             @RequestParam("jobRoleId")      Long jobRoleId
     ) {
         return ResponseEntity.ok(
-                resumeService.uploadAndAnalyse(file, candidateName, candidateEmail, branchId, jobRoleId)
+                resumeService.uploadAndAnalyse(
+                        file,
+                        candidateName,
+                        candidateEmail,
+                        candidatePhone,
+                        branchId,
+                        jobRoleId
+                )
         );
     }
 

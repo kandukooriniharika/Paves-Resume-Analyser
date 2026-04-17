@@ -8,15 +8,19 @@ import useAuthStore from '../../store/authStore';
 export default function Navbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const displayName = user?.full_name || user?.email || 'HR Manager';
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const initials = user?.full_name
-    ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : 'HR';
+  const initials = displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <nav style={navbarClass}>
@@ -67,7 +71,7 @@ export default function Navbar() {
             {initials}
           </div>
           <span style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-primary)' }}>
-            {user?.full_name?.split(' ')[0] || 'HR Manager'}
+            {displayName.split(' ')[0] || 'HR'}
           </span>
         </div>
 

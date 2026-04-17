@@ -8,7 +8,7 @@ import {
 import StatsCard from '../components/ui/StatsCard';
 import ResumeCard from '../components/resume/ResumeCard';
 import Badge from '../components/ui/Badge';
-import { branchAPI, resumeAPI } from '../api/api';
+import { branchAPI } from '../api/api';
 import useAuthStore from '../store/authStore';
 import useResumeStore from '../store/resumeStore';
 import { cardClass, pageTitleClass, headingClass } from '../styles/common';
@@ -22,13 +22,14 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   const branchId = user?.branch_id;
+  const displayName = user?.full_name || user?.email || 'HR Manager';
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
         const [branchRes] = await Promise.all([
-          branchAPI.getSummary(),
+          branchAPI.getAll(),
           branchId ? fetchResumes(branchId) : Promise.resolve(),
         ]);
         setBranches(branchRes.data || []);
@@ -41,7 +42,6 @@ export default function Dashboard() {
     load();
   }, [branchId]);
 
-  // Compute stats
   const totalResumes = resumes.length;
   const shortlisted = resumes.filter(r => r.is_shortlisted).length;
   const avgScore = totalResumes
@@ -67,13 +67,12 @@ export default function Dashboard() {
 
   return (
     <div className="page-container animate-fadeUp">
-      {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <p style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)', fontWeight: '500', marginBottom: '4px' }}>
           {greeting},
         </p>
         <h1 style={pageTitleClass}>
-          {user?.full_name || 'HR Manager'} 👋
+          {displayName}
         </h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
           Here's what's happening in your recruitment pipeline today.
@@ -90,7 +89,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Stats Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -115,7 +113,7 @@ export default function Dashboard() {
         />
         <StatsCard
           title="Avg. Score"
-          value={avgScore ? `${avgScore}` : '—'}
+          value={avgScore ? `${avgScore}` : '-'}
           subtitle="Overall score avg."
           icon={TrendingUp}
           color="var(--success)"
@@ -131,10 +129,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Two-column content */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px', alignItems: 'start' }}>
-
-        {/* Recent resumes */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h2 style={headingClass}>Recent Uploads</h2>
@@ -185,10 +180,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Right panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          {/* Top scored */}
           <div style={cardClass}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <BarChart2 size={15} color="var(--accent)" />
@@ -245,7 +237,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Branches summary */}
           <div style={cardClass}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Users size={15} color="var(--accent)" />
@@ -287,7 +278,7 @@ export default function Dashboard() {
                       fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer',
                     }}
                   >
-                    +{branches.length - 5} more →
+                    +{branches.length - 5} more
                   </button>
                 )}
               </div>

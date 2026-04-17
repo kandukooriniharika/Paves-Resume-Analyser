@@ -1,6 +1,14 @@
 // src/api/api.js
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
+import {
+  normalizeBranchList,
+  normalizeBranchSummaryList,
+  normalizeJobList,
+  normalizeLoginPayload,
+  normalizeResume,
+  normalizeResumeList,
+} from './normalizers';
 
 const api = axios.create({
   baseURL: '/api',
@@ -8,21 +16,27 @@ const api = axios.create({
 });
 
 const authRoutePattern = /\/auth\/(login|register)$/;
+const withNormalizedData = (requestPromise, normalize) =>
+  requestPromise.then((response) => ({
+    ...response,
+    data: normalize(response.data),
+  }));
 
-// Attach token from localStorage on every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && token !== 'undefined' && token !== 'null') {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-// Handle 401 — clear auth and redirect to login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err.response?.status;
     const requestUrl = err.config?.url || '';
-    const hasSession = Boolean(localStorage.getItem('token'));
+    const token = localStorage.getItem('token');
+    const hasSession = Boolean(token && token !== 'undefined' && token !== 'null');
 
     if (status === 401 && hasSession && !authRoutePattern.test(requestUrl)) {
       useAuthStore.getState().logout();
@@ -34,37 +48,58 @@ api.interceptors.response.use(
   }
 );
 
-// ─── Auth ───────────────────────────────────────────
 export const authAPI = {
-  login:    (data) => api.post('/auth/login', data),
+  login: (data) =>
+    withNormalizedData(api.post('/auth/login', data), normalizeLoginPayload),
   register: (data) => api.post('/auth/register', data),
 };
 
-// ─── Branches ───────────────────────────────────────
 export const branchAPI = {
-  getAll:     () => api.get('/branches'),
-  getSummary: () => api.get('/branches/summary'),
+  getAll: () => withNormalizedData(api.get('/branches'), normalizeBranchList),
+  getSummary: () =>
+    withNormalizedData(api.get('/branches/summary'), normalizeBranchSummaryList),
 };
 
-// ─── Jobs ───────────────────────────────────────────
 export const jobAPI = {
-  getByBranch: (branchId) => api.get(`/jobs/${branchId}`),
+  getByBranch: (branchId) =>
+    withNormalizedData(api.get(`/jobs/${branchId}`), normalizeJobList),
 };
 
-// ─── Resumes ────────────────────────────────────────
 export const resumeAPI = {
-  upload:       (formData) => api.post('/resumes/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  create:       (data)     => api.post('/resumes', data),
-  getByBranch:  (branchId) => api.get(`/resumes/branch/${branchId}`),
-  shortlist:    (resumeId, data) => api.patch(`/resumes/${resumeId}/shortlist`, data),
+  upload: (formData) =>
+    withNormalizedData(
+      api.post('/resumes/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+      normalizeResume
+    ),
+  create: (data) =>
+    withNormalizedData(
+      api.post('/resumes', null, {
+        params: {
+          name: data?.name,
+          branchId: data?.branchId,
+          jobId: data?.jobId,
+        },
+      }),
+      normalizeResume
+    ),
+  getByBranch: (branchId) =>
+    withNormalizedData(api.get(`/resumes/branch/${branchId}`), normalizeResumeList),
+  shortlist: (resumeId, data) =>
+    withNormalizedData(
+      api.patch(`/resumes/${resumeId}/shortlist`, null, {
+        params: { notes: data?.notes ?? '' },
+      }),
+      normalizeResume
+    ),
 };
 
-// ─── Analytics ──────────────────────────────────────
 export const analyticsAPI = {
-  getTop:    (branchId) => api.get(`/analytics/top/${branchId}`),
-  getBranch: (branchId) => api.get(`/analytics/branch/${branchId}`),
+  getTop: (branchId) =>
+    withNormalizedData(api.get(`/analytics/top/${branchId}`), normalizeResumeList),
+  getBranch: (branchId) =>
+    withNormalizedData(api.get(`/analytics/branch/${branchId}`), normalizeResumeList),
 };
 
 export default api;

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,8 @@ public class ResumeService {
      */
     @SuppressWarnings("unchecked")
     public Resume uploadAndAnalyse(MultipartFile file, String candidateName,
-                                   String candidateEmail, Long branchId, Long jobRoleId) {
+                                   String candidateEmail, String candidatePhone,
+                                   Long branchId, Long jobRoleId) {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new RuntimeException("Branch not found"));
@@ -66,6 +68,7 @@ public class ResumeService {
             Resume resume = Resume.builder()
                     .candidateName(candidateName)
                     .candidateEmail(candidateEmail)
+                    .candidatePhone(candidatePhone)
                     .fileUrl(fileUrl)
                     .publicId(publicId)
                     .extractedText(extractedText)
@@ -80,6 +83,7 @@ public class ResumeService {
                     .strengths(analysis.getStrengths())
                     .suggestions(analysis.getSuggestions())
                     .aiSummary(analysis.getAiSummary())
+                    .analysedAt(LocalDateTime.now())
                     .build();
 
             return resumeRepository.save(resume);

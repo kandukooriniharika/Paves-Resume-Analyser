@@ -2,14 +2,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Upload, FileText, X, CheckCircle, AlertCircle,
-  ChevronDown, Briefcase,
+  Upload, FileText, X, CheckCircle, AlertCircle, Briefcase,
 } from 'lucide-react';
 import { resumeAPI, branchAPI, jobAPI } from '../api/api';
 import useAuthStore from '../store/authStore';
 import { cardClass, pageTitleClass, headingClass, primaryBtn, secondaryBtn, inputClass } from '../styles/common';
 
-const ACCEPTED = '.pdf,.doc,.docx';
+const ACCEPTED = '.pdf';
 
 export default function UploadResume() {
   const navigate = useNavigate();
@@ -25,10 +24,9 @@ export default function UploadResume() {
     job_role_id: '',
     candidate_name: '',
     candidate_email: '',
-    candidate_phone: '',
   });
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState(''); // uploading | analysing | done | error
+  const [phase, setPhase] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
@@ -36,7 +34,9 @@ export default function UploadResume() {
     branchAPI.getAll().then(r => {
       const data = r.data || [];
       setBranches(data);
-      if (!form.branch_id && data.length) setForm(f => ({ ...f, branch_id: String(data[0].id) }));
+      if (!form.branch_id && data.length) {
+        setForm(f => ({ ...f, branch_id: String(data[0].id) }));
+      }
     });
   }, []);
 
@@ -47,18 +47,21 @@ export default function UploadResume() {
       .catch(() => setJobs([]));
   }, [form.branch_id]);
 
-  const handleFile = (f) => {
-    if (!f) return;
-    const ext = f.name.split('.').pop().toLowerCase();
-    if (!['pdf', 'doc', 'docx'].includes(ext)) {
-      setError('Only PDF, DOC, or DOCX files are accepted.');
+  const handleFile = (nextFile) => {
+    if (!nextFile) return;
+
+    const ext = nextFile.name.split('.').pop().toLowerCase();
+    if (ext !== 'pdf') {
+      setError('Only PDF files are accepted.');
       return;
     }
-    if (f.size > 10 * 1024 * 1024) {
+
+    if (nextFile.size > 10 * 1024 * 1024) {
       setError('File must be under 10 MB.');
       return;
     }
-    setFile(f);
+
+    setFile(nextFile);
     setError('');
   };
 
@@ -70,35 +73,36 @@ export default function UploadResume() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) { setError('Please select a resume file.'); return; }
-    if (!form.branch_id) { setError('Please select a branch.'); return; }
+    if (!file) {
+      setError('Please select a resume file.');
+      return;
+    }
+    if (!form.branch_id) {
+      setError('Please select a branch.');
+      return;
+    }
+    if (!form.job_role_id) {
+      setError('Please select a job role.');
+      return;
+    }
 
     setLoading(true);
     setError('');
-    setPhase('uploading');
+    setPhase('analysing');
 
     try {
-      // Step 1: upload file
-      const fd = new FormData();
-      fd.append('file', file);
-      const uploadRes = await resumeAPI.upload(fd);
-      const { file_url, public_id, extracted_text } = uploadRes.data;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('candidateName', form.candidate_name);
+      formData.append('candidateEmail', form.candidate_email);
+      formData.append('branchId', form.branch_id);
+      formData.append('jobRoleId', form.job_role_id);
 
-      setPhase('analysing');
-
-      // Step 2: create resume record (triggers AI analysis on backend)
-      const payload = {
-        ...form,
-        file_url,
-        public_id,
-        extracted_text,
-        uploaded_by: user?.id,
-      };
-      const createRes = await resumeAPI.create(payload);
-      setResult(createRes.data);
+      const uploadRes = await resumeAPI.upload(formData);
+      setResult(uploadRes.data);
       setPhase('done');
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed. Please try again.');
+      setError(err.response?.data?.message || err.response?.data || 'Upload failed. Please try again.');
       setPhase('error');
     } finally {
       setLoading(false);
@@ -110,10 +114,14 @@ export default function UploadResume() {
     setResult(null);
     setPhase('');
     setError('');
-    setForm(f => ({ ...f, candidate_name: '', candidate_email: '', candidate_phone: '', job_role_id: '' }));
+    setForm(f => ({
+      ...f,
+      candidate_name: '',
+      candidate_email: '',
+      job_role_id: '',
+    }));
   };
 
-  // ─── Success state ────────────────────────────────────
   if (phase === 'done' && result) {
     return (
       <div className="page-container animate-fadeUp" style={{ maxWidth: '600px' }}>
@@ -131,7 +139,6 @@ export default function UploadResume() {
             {result.candidate_name}'s resume has been uploaded and analysed.
           </p>
 
-          {/* Score summary */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px',
             marginBottom: '28px', background: 'var(--surface-2)',
@@ -139,12 +146,15 @@ export default function UploadResume() {
           }}>
             {[
               { label: 'Overall', value: result.overall_score },
-              { label: 'ATS',     value: result.ats_score },
-              { label: 'Skills',  value: result.skill_match_score },
+              { label: 'ATS', value: result.ats_score },
+              { label: 'Skills', value: result.skill_match_score },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.03em', color: value >= 80 ? 'var(--success)' : value >= 60 ? 'var(--warning)' : 'var(--danger)' }}>
-                  {value ?? '—'}
+                <p style={{
+                  fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.03em',
+                  color: value >= 80 ? 'var(--success)' : value >= 60 ? 'var(--warning)' : 'var(--danger)',
+                }}>
+                  {value ?? '-'}
                 </p>
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>{label}</p>
               </div>
@@ -174,10 +184,7 @@ export default function UploadResume() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px', alignItems: 'start' }}>
-        {/* Main form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          {/* Drop zone */}
           <div
             onClick={() => !loading && fileRef.current?.click()}
             onDragOver={e => { e.preventDefault(); setDragging(true); }}
@@ -223,21 +230,19 @@ export default function UploadResume() {
                 <p style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '4px' }}>
                   Drop resume here, or <span style={{ color: 'var(--accent)' }}>browse</span>
                 </p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>PDF, DOC, DOCX · max 10 MB</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>PDF only - max 10 MB</p>
               </>
             )}
           </div>
 
-          {/* Candidate info */}
           <div style={cardClass}>
             <h3 style={{ ...headingClass, marginBottom: '16px' }}>Candidate Information</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               {[
-                { field: 'candidate_name',  label: 'Full Name',    placeholder: 'Jane Smith',           type: 'text',  required: true  },
-                { field: 'candidate_email', label: 'Email',        placeholder: 'jane@example.com',     type: 'email', required: true  },
-                { field: 'candidate_phone', label: 'Phone',        placeholder: '+91 9876543210',       type: 'tel',   required: false },
+                { field: 'candidate_name', label: 'Full Name', placeholder: 'Jane Smith', type: 'text', required: true },
+                { field: 'candidate_email', label: 'Email', placeholder: 'jane@example.com', type: 'email', required: true },
               ].map(({ field, label, placeholder, type, required }) => (
-                <div key={field} style={{ gridColumn: field === 'candidate_phone' ? '1 / -1' : undefined }}>
+                <div key={field}>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '500', color: 'var(--text-secondary)', marginBottom: '5px' }}>
                     {label} {required && <span style={{ color: 'var(--danger)' }}>*</span>}
                   </label>
@@ -256,7 +261,6 @@ export default function UploadResume() {
             </div>
           </div>
 
-          {/* Branch + role */}
           <div style={cardClass}>
             <h3 style={{ ...headingClass, marginBottom: '16px' }}>Assignment</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -274,15 +278,16 @@ export default function UploadResume() {
                     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
                   }}
                 >
-                  <option value="">Select branch…</option>
+                  <option value="">Select branch...</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '500', color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                  Job Role
+                  Job Role <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <select
+                  required
                   value={form.job_role_id}
                   onChange={e => setForm(f => ({ ...f, job_role_id: e.target.value }))}
                   style={{
@@ -291,7 +296,7 @@ export default function UploadResume() {
                     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
                   }}
                 >
-                  <option value="">All roles</option>
+                  <option value="">Select job role...</option>
                   {jobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
                 </select>
               </div>
@@ -309,7 +314,6 @@ export default function UploadResume() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading || !file}
@@ -323,7 +327,7 @@ export default function UploadResume() {
             {loading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
-                <span>{phase === 'uploading' ? 'Uploading file…' : 'Analysing with AI…'}</span>
+                <span>Uploading and analysing...</span>
               </div>
             ) : (
               <><Upload size={16} /> Analyse Resume</>
@@ -331,15 +335,14 @@ export default function UploadResume() {
           </button>
         </form>
 
-        {/* Info sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={cardClass}>
             <h3 style={{ ...headingClass, marginBottom: '14px' }}>What happens next?</h3>
             {[
-              { step: '01', label: 'File Upload',    desc: 'Your resume is securely uploaded to cloud storage.' },
+              { step: '01', label: 'File Upload', desc: 'Your resume is securely uploaded to cloud storage.' },
               { step: '02', label: 'Text Extraction', desc: 'Text is extracted and cleaned for analysis.' },
-              { step: '03', label: 'AI Analysis',    desc: 'AI evaluates skills, experience, and role fit.' },
-              { step: '04', label: 'ATS Scoring',    desc: 'Score is calculated based on keyword matching.' },
+              { step: '03', label: 'AI Analysis', desc: 'AI evaluates skills, experience, and role fit.' },
+              { step: '04', label: 'ATS Scoring', desc: 'Score is calculated based on keyword matching.' },
             ].map(({ step, label, desc }) => (
               <div key={step} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                 <span style={{
@@ -363,7 +366,7 @@ export default function UploadResume() {
               Supported Formats
             </p>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              PDF, Microsoft Word (.doc, .docx)<br />
+              PDF only<br />
               Maximum file size: <strong>10 MB</strong>
             </p>
           </div>

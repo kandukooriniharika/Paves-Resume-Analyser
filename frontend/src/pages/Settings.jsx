@@ -47,7 +47,7 @@ export default function Settings() {
             <User size={16} color="var(--accent)" />
             <h2 style={headingClass}>Profile</h2>
           </div>
-          <DetailRow label="Full Name" value={user?.full_name} />
+          <DetailRow label="Full Name" value={user?.full_name || user?.email} />
           <DetailRow label="Email" value={user?.email} />
           <DetailRow label="Role" value={user?.role} />
         </section>

@@ -14,7 +14,10 @@ const useResumeStore = create((set, get) => ({
       const res = await resumeAPI.getByBranch(branchId);
       set({ resumes: res.data, loading: false });
     } catch (err) {
-      set({ error: err.response?.data?.message || 'Failed to fetch resumes', loading: false });
+      set({
+        error: err.response?.data?.message || err.response?.data || 'Failed to fetch resumes',
+        loading: false,
+      });
     }
   },
 
