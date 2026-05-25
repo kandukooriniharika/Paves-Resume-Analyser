@@ -22,7 +22,7 @@ export default function Login() {
       const res = await authAPI.login(form);
       const { token, user } = res.data;
       login(token, user);
-      navigate('/dashboard');
+      navigate('/screening');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data || 'Invalid credentials. Please try again.');
     } finally {

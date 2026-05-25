@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\\\\frontend\\\\src\\\\pages\" -Recurse -Name)",
+      "PowerShell(git -C \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" status --short 2>&1)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" -Recurse -Force | Select-Object -Property FullName | ForEach-Object { $_.FullName } | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\\\\ai-screening-service\" -File -Recurse -Depth 1 | Where-Object { $_.Extension -eq \".py\" } | Select-Object -Property FullName)",
+      "PowerShell(ls \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" | Where-Object { $_.PSIsContainer -eq $false })",
+      "Bash(npx vite *)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\\\\frontend\\\\src\" -Recurse -Include \"*.js\",\"*.jsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(mvn compile *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(echo \"Deleted frontend legacy files\")"
+    ]
+  }
+}
