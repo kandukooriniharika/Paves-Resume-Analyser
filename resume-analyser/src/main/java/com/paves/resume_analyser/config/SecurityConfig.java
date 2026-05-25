@@ -21,16 +21,23 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+    private static final String[] PUBLIC_URLS = {
+        "/api/auth/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/v3/api-docs",
+        "/v3/api-docs/**",
+        "/v3/api-docs.yaml",
+        "/webjars/**",
+        "/api/screening/files/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                // Swagger UI and API docs
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                // Serve local uploaded files
-                .requestMatchers("/api/screening/files/**").permitAll()
+                .requestMatchers(PUBLIC_URLS).permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session ->
