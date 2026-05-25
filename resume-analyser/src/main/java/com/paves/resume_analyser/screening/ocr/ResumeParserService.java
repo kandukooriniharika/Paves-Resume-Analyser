@@ -1,6 +1,7 @@
 package com.paves.resume_analyser.screening.ocr;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.hwpf.HWPFDocument;
@@ -53,7 +54,7 @@ public class ResumeParserService {
      * shorter than 100 characters (scanned / image-only PDF).
      */
     private String extractFromPdf(byte[] bytes, String filename) throws Exception {
-        try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(bytes))) {
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(doc);
             if (text != null && text.trim().length() >= 100) {
