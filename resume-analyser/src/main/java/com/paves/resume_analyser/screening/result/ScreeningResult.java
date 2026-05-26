@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Stores all scoring layers and HR override data for a single screened resume.
@@ -20,8 +21,8 @@ import java.time.LocalDateTime;
 public class ScreeningResult {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(nullable = false, updatable = false)
+    private String id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resume_id", unique = true)
@@ -88,4 +89,11 @@ public class ScreeningResult {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    void ensureId() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+    }
 }

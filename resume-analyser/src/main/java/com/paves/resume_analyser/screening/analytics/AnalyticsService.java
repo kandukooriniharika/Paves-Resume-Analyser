@@ -4,6 +4,7 @@ import com.paves.resume_analyser.screening.analytics.dto.CampaignAnalyticsRespon
 import com.paves.resume_analyser.screening.analytics.dto.DashboardStatsResponse;
 import com.paves.resume_analyser.screening.campaign.Campaign;
 import com.paves.resume_analyser.screening.campaign.CampaignRepository;
+import com.paves.resume_analyser.screening.campaign.CampaignService;
 import com.paves.resume_analyser.screening.campaign.CampaignStatus;
 import com.paves.resume_analyser.screening.result.Recommendation;
 import com.paves.resume_analyser.screening.result.ScreeningResult;
@@ -13,8 +14,10 @@ import com.paves.resume_analyser.screening.resume.ResumeStatus;
 import com.paves.resume_analyser.screening.resume.ScreeningResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +34,7 @@ public class AnalyticsService {
     private final CampaignRepository campaignRepository;
     private final ScreeningResumeRepository resumeRepository;
     private final ScreeningResultRepository resultRepository;
+    private final CampaignService campaignService;
 
     /** Builds a system-wide dashboard aggregating stats across all campaigns. */
     @Transactional(readOnly = true)
@@ -118,14 +122,15 @@ public class AnalyticsService {
                 .campaignStatusDistribution(statusDist)
                 .recommendationDistribution(recDist)
                 .queueHealth(queueHealth)
+                .recentCampaigns(campaignService.listRecentCampaigns())
                 .build();
     }
 
     /** Builds per-campaign analytics for the given campaign ID. */
     @Transactional(readOnly = true)
-    public CampaignAnalyticsResponse getCampaignAnalytics(Long campaignId) {
+    public CampaignAnalyticsResponse getCampaignAnalytics(String campaignId) {
         Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + campaignId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaign not found: " + campaignId));
 
         long total     = resumeRepository.countByCampaignId(campaignId);
         long completed = resumeRepository.countByCampaignIdAndStatus(campaignId, ResumeStatus.COMPLETED);
@@ -169,6 +174,8 @@ public class AnalyticsService {
                 .rank(rank)
                 .resultId(r.getId())
                 .resumeId(r.getResume() != null ? r.getResume().getId() : null)
+                .campaignId(r.getCampaign() != null ? r.getCampaign().getId() : null)
+                .roleName(r.getCampaign() != null ? r.getCampaign().getRoleName() : null)
                 .candidateName(r.getResume() != null ? r.getResume().getCandidateName() : null)
                 .candidateEmail(r.getResume() != null ? r.getResume().getCandidateEmail() : null)
                 .overallScore(r.getOverallScore())
@@ -185,6 +192,8 @@ public class AnalyticsService {
                 .rank(rank)
                 .resultId(r.getResultId())
                 .resumeId(r.getResumeId())
+                .campaignId(r.getCampaignId())
+                .roleName(r.getRoleName())
                 .candidateName(r.getCandidateName())
                 .candidateEmail(r.getCandidateEmail())
                 .overallScore(r.getOverallScore())

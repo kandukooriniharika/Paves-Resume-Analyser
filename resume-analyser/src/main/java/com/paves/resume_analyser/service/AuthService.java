@@ -1,13 +1,20 @@
 package com.paves.resume_analyser.service;
 
-import com.paves.resume_analyser.dto.*;
+import com.paves.resume_analyser.dto.AuthResponse;
+import com.paves.resume_analyser.dto.LoginRequest;
+import com.paves.resume_analyser.dto.RegisterRequest;
 import com.paves.resume_analyser.enums.UserRole;
-import com.paves.resume_analyser.model.*;
-import com.paves.resume_analyser.repository.*;
+import com.paves.resume_analyser.model.Branch;
+import com.paves.resume_analyser.model.User;
+import com.paves.resume_analyser.repository.BranchRepository;
+import com.paves.resume_analyser.repository.UserRepository;
 import com.paves.resume_analyser.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,16 +27,19 @@ public class AuthService {
 
     public String register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("User already exists with this email");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists with this email");
         }
 
         Branch branch = null;
-        if (request.getRole() == UserRole.ACQUISITION) {
+        if (request.getRole().requiresBranch()) {
             if (request.getBranchId() == null) {
-                throw new RuntimeException("Branch ID is required for ACQUISITION role");
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Branch ID is required for ACQUISITION or HR role"
+                );
             }
             branch = branchRepository.findById(request.getBranchId())
-                    .orElseThrow(() -> new RuntimeException("Branch not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Branch not found"));
         }
 
         User user = User.builder()
@@ -45,26 +55,27 @@ public class AuthService {
         return "User registered successfully";
     }
 
-    public String login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        org.springframework.security.core.userdetails.UserDetails userDetails =
-                org.springframework.security.core.userdetails.User.builder()
-                        .username(user.getEmail())
-                        .password(user.getPassword())
-                        .roles(user.getRoleName())
-                        .build();
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username(user.getEmail())
+                .password(user.getPassword())
+                .roles(user.getRoleName())
+                .build();
 
-        return jwtUtil.generateToken(
+        String token = jwtUtil.generateToken(
                 userDetails,
                 user.getId(),
                 user.getRoleName(),
                 user.getBranch() != null ? user.getBranch().getId() : null
         );
+
+        return AuthResponse.of(token, user);
     }
 }

@@ -11,23 +11,23 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ScreeningResultRepository extends JpaRepository<ScreeningResult, Long> {
+public interface ScreeningResultRepository extends JpaRepository<ScreeningResult, String> {
 
-    Optional<ScreeningResult> findByResumeId(Long resumeId);
+    Optional<ScreeningResult> findByResumeId(String resumeId);
 
-    Page<ScreeningResult> findByCampaignIdOrderByOverallScoreDesc(Long campaignId, Pageable pageable);
+    Page<ScreeningResult> findByCampaignIdOrderByOverallScoreDesc(String campaignId, Pageable pageable);
 
     /** Non-paged version used for CSV/XLSX export. */
-    List<ScreeningResult> findByCampaignIdOrderByOverallScoreDesc(Long campaignId);
+    List<ScreeningResult> findByCampaignIdOrderByOverallScoreDesc(String campaignId);
 
-    List<ScreeningResult> findTop10ByCampaignIdOrderByOverallScoreDesc(Long campaignId);
+    List<ScreeningResult> findTop10ByCampaignIdOrderByOverallScoreDesc(String campaignId);
 
-    long countByCampaignId(Long campaignId);
+    long countByCampaignId(String campaignId);
 
-    long countByCampaignIdAndRecommendation(Long campaignId, Recommendation recommendation);
+    long countByCampaignIdAndRecommendation(String campaignId, Recommendation recommendation);
 
-    long countByCampaignIdAndHrStatus(Long campaignId, String hrStatus);
+    long countByCampaignIdAndHrStatus(String campaignId, String hrStatus);
 
     @Query("SELECT AVG(r.overallScore) FROM ScreeningResult r WHERE r.campaign.id = :cid")
-    Double avgScoreByCampaignId(@Param("cid") Long campaignId);
+    Double avgScoreByCampaignId(@Param("cid") String campaignId);
 }

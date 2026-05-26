@@ -1,5 +1,6 @@
 package com.paves.resume_analyser.screening.campaign;
 
+import com.paves.resume_analyser.screening.persistence.BranchIdStringConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -8,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -22,8 +24,8 @@ import java.util.stream.Collectors;
 public class Campaign {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(nullable = false, updatable = false)
+    private String id;
 
     @Column(nullable = false)
     private String roleName;
@@ -45,6 +47,7 @@ public class Campaign {
     private String department;
 
     /** Nullable — null means the campaign is global (all branches). */
+    @Convert(converter = BranchIdStringConverter.class)
     private Long branchId;
 
     @Enumerated(EnumType.STRING)
@@ -78,5 +81,12 @@ public class Campaign {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
+    }
+
+    @PrePersist
+    void ensureId() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
     }
 }

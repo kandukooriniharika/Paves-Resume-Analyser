@@ -11,8 +11,10 @@ import java.util.List;
 public class CandidateRankResponse {
 
     private int rank;
-    private Long resultId;
-    private Long resumeId;
+    private String resultId;
+    private String resumeId;
+    private String campaignId;
+    private String roleName;
     private String candidateName;
     private String candidateEmail;
     private Double overallScore;

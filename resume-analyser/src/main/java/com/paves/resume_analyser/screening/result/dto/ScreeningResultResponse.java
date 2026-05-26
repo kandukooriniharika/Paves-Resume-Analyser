@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class ScreeningResultResponse {
 
-    private Long id;
-    private Long resumeId;
-    private Long campaignId;
+    private String id;
+    private String resumeId;
+    private String campaignId;
 
     // From resume
     private String candidateName;

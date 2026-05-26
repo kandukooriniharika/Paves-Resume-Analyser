@@ -13,8 +13,10 @@ import com.paves.resume_analyser.screening.resume.ScreeningResume;
 import com.paves.resume_analyser.screening.resume.ScreeningResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,14 +46,14 @@ public class PipelineService {
      * in the given campaign. Each resume is processed sequentially within the async thread.
      */
     @Async("screeningExecutor")
-    public CompletableFuture<Void> runPipeline(Long campaignId) {
+    public CompletableFuture<Void> runPipeline(String campaignId) {
         log.info("Pipeline started for campaign={}", campaignId);
 
         List<ScreeningResume> pendingResumes = resumeRepo.findByCampaignIdAndStatusIn(
                 campaignId, List.of(ResumeStatus.PENDING, ResumeStatus.FAILED));
 
         Campaign campaign = campaignRepo.findById(campaignId)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + campaignId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaign not found: " + campaignId));
 
         for (ScreeningResume resume : pendingResumes) {
             try {

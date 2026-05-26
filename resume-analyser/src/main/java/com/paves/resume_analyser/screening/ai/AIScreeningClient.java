@@ -134,7 +134,7 @@ public class AIScreeningClient {
      * Returns {@code true} if the resume is a near-duplicate of an existing one in the campaign.
      */
     @SuppressWarnings("unchecked")
-    public boolean checkDuplicate(List<Double> embedding, Long campaignId) {
+    public boolean checkDuplicate(List<Double> embedding, String campaignId) {
         try {
             Map<String, Object> body = Map.of(
                     "embedding", embedding,

@@ -23,7 +23,7 @@ public class ScreeningResultController {
 
     @GetMapping("/{campaignId}")
     public ResponseEntity<ApiResponse<Page<ScreeningResultResponse>>> getResults(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
@@ -34,7 +34,7 @@ public class ScreeningResultController {
 
     @GetMapping("/{campaignId}/top")
     public ResponseEntity<ApiResponse<List<CandidateRankResponse>>> getTopCandidates(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -43,7 +43,7 @@ public class ScreeningResultController {
 
     @GetMapping("/detail/{resultId}")
     public ResponseEntity<ApiResponse<ScreeningResultResponse>> getResultDetail(
-            @PathVariable Long resultId,
+            @PathVariable String resultId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -52,7 +52,7 @@ public class ScreeningResultController {
 
     @PatchMapping("/{resultId}/override")
     public ResponseEntity<ApiResponse<ScreeningResultResponse>> hrOverride(
-            @PathVariable Long resultId,
+            @PathVariable String resultId,
             @Valid @RequestBody HROverrideRequest req,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
@@ -63,7 +63,7 @@ public class ScreeningResultController {
 
     @PostMapping("/{resultId}/shortlist")
     public ResponseEntity<ApiResponse<ScreeningResultResponse>> shortlist(
-            @PathVariable Long resultId,
+            @PathVariable String resultId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -73,7 +73,7 @@ public class ScreeningResultController {
 
     @PostMapping("/{resultId}/reject")
     public ResponseEntity<ApiResponse<ScreeningResultResponse>> reject(
-            @PathVariable Long resultId,
+            @PathVariable String resultId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -87,7 +87,7 @@ public class ScreeningResultController {
      */
     @GetMapping("/{campaignId}/export")
     public ResponseEntity<byte[]> export(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestParam(defaultValue = "csv") String format,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) throws Exception {

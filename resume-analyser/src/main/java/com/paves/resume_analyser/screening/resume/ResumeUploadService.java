@@ -7,9 +7,11 @@ import com.paves.resume_analyser.screening.resume.dto.UploadStatusResponse;
 import com.paves.resume_analyser.screening.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,9 +41,9 @@ public class ResumeUploadService {
      * @return list of saved resume DTOs (skipped/invalid files are silently omitted)
      */
     @Transactional
-    public List<ResumeResponse> bulkUpload(Long campaignId, List<MultipartFile> files) throws Exception {
+    public List<ResumeResponse> bulkUpload(String campaignId, List<MultipartFile> files) throws Exception {
         Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + campaignId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaign not found: " + campaignId));
 
         List<ResumeResponse> results = new ArrayList<>();
         for (MultipartFile file : files) {
@@ -114,7 +116,7 @@ public class ResumeUploadService {
     }
 
     /** Returns all resumes for a campaign ordered newest-first. */
-    public List<ResumeResponse> listResumes(Long campaignId) {
+    public List<ResumeResponse> listResumes(String campaignId) {
         return resumeRepository.findByCampaignIdOrderByUploadedAtDesc(campaignId)
                 .stream()
                 .map(ResumeResponse::from)
@@ -122,7 +124,7 @@ public class ResumeUploadService {
     }
 
     /** Returns per-status counts and a computed progress percentage for the campaign. */
-    public UploadStatusResponse getUploadStatus(Long campaignId) {
+    public UploadStatusResponse getUploadStatus(String campaignId) {
         long total       = resumeRepository.countByCampaignId(campaignId);
         long parsing     = resumeRepository.countByCampaignIdAndStatus(campaignId, ResumeStatus.PARSING);
         long layer1      = resumeRepository.countByCampaignIdAndStatus(campaignId, ResumeStatus.LAYER1);
@@ -146,9 +148,9 @@ public class ResumeUploadService {
     }
 
     @Transactional
-    public void deleteResume(Long resumeId) {
+    public void deleteResume(String resumeId) {
         ScreeningResume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Resume not found: " + resumeId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found: " + resumeId));
         if (resume.getS3Key() != null) {
             storageService.delete(resume.getS3Key());
         }

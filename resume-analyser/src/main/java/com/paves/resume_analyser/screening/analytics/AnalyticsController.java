@@ -24,7 +24,7 @@ public class AnalyticsController {
 
     @GetMapping("/campaign/{campaignId}")
     public ResponseEntity<ApiResponse<CampaignAnalyticsResponse>> getCampaignAnalytics(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 

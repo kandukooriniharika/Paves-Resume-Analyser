@@ -16,11 +16,23 @@ function headers() {
   const { user } = useAuthStore.getState();
   return {
     'X-User-Role': mapRole(user?.role),
-    'X-User-Name': user?.full_name ?? user?.email ?? 'system',
+    'X-User-Name': user?.full_name ?? user?.fullName ?? user?.email ?? 'system',
   };
 }
 
 const api = axios.create({ baseURL: BASE, timeout: 60000 });
+
+function unwrapApiResponse(payload) {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Object.prototype.hasOwnProperty.call(payload, 'success') &&
+    Object.prototype.hasOwnProperty.call(payload, 'data')
+  ) {
+    return payload.data;
+  }
+  return payload;
+}
 
 api.interceptors.request.use(cfg => {
   const token = useAuthStore.getState().token;
@@ -30,7 +42,10 @@ api.interceptors.request.use(cfg => {
 });
 
 api.interceptors.response.use(
-  r => r,
+  r => {
+    r.data = unwrapApiResponse(r.data);
+    return r;
+  },
   err => {
     if (err.response?.status === 401) {
       useAuthStore.getState().logout?.();

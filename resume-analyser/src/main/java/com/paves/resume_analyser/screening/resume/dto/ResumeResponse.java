@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ResumeResponse {
 
-    private Long id;
-    private Long campaignId;
+    private String id;
+    private String campaignId;
     private String originalFilename;
     private String fileUrl;
     private String candidateName;
