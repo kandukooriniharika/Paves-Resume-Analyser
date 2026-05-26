@@ -55,6 +55,16 @@ export default function CreateJobRole() {
   const [loadingData, setLoadingData] = useState(isEdit);
   const [submitError, setSubmitError] = useState('');
 
+  const parseWeights = (value) => {
+    if (!value) return {};
+    try {
+      const parsed = JSON.parse(value);
+      return typeof parsed === 'object' && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+
   const weightTotal =
     Number(form.skillsWeight) +
     Number(form.experienceWeight) +
@@ -68,6 +78,7 @@ export default function CreateJobRole() {
       try {
         const res = await campaignAPI.getById(id);
         const d = res.data;
+        const weights = parseWeights(d.skillWeightsJson);
         setForm({
           roleName:         d.roleName ?? '',
           department:       d.department ?? '',
@@ -78,10 +89,10 @@ export default function CreateJobRole() {
           maxExperience:    d.maxExperience ?? '',
           targetHeadcount:  d.targetHeadcount ?? '',
           branchId:         d.branchId ?? '',
-          skillsWeight:     d.skillsWeight ?? d.skills_weight ?? 40,
-          experienceWeight: d.experienceWeight ?? d.experience_weight ?? 30,
-          educationWeight:  d.educationWeight ?? d.education_weight ?? 20,
-          aiScoreWeight:    d.aiScoreWeight ?? d.ai_score_weight ?? 10,
+          skillsWeight:     weights.skills ?? 40,
+          experienceWeight: weights.experience ?? 30,
+          educationWeight:  weights.education ?? 20,
+          aiScoreWeight:    weights.aiScore ?? 10,
         });
       } catch (err) {
         setSubmitError('Failed to load job role data.');
@@ -116,16 +127,18 @@ export default function CreateJobRole() {
         roleName:         form.roleName.trim(),
         department:       form.department.trim() || undefined,
         jobDescription:   form.jobDescription.trim() || undefined,
-        requiredSkills:   form.requiredSkills ? form.requiredSkills.split(',').map(s => s.trim()).filter(Boolean) : [],
-        niceToHaveSkills: form.niceToHaveSkills ? form.niceToHaveSkills.split(',').map(s => s.trim()).filter(Boolean) : [],
+        requiredSkills:   form.requiredSkills.trim() || undefined,
+        niceToHaveSkills: form.niceToHaveSkills.trim() || undefined,
         minExperience:    form.minExperience !== '' ? Number(form.minExperience) : undefined,
         maxExperience:    form.maxExperience !== '' ? Number(form.maxExperience) : undefined,
         targetHeadcount:  form.targetHeadcount !== '' ? Number(form.targetHeadcount) : undefined,
         branchId:         form.branchId !== '' ? Number(form.branchId) : undefined,
-        skillsWeight:     Number(form.skillsWeight),
-        experienceWeight: Number(form.experienceWeight),
-        educationWeight:  Number(form.educationWeight),
-        aiScoreWeight:    Number(form.aiScoreWeight),
+        skillWeightsJson: JSON.stringify({
+          skills: Number(form.skillsWeight),
+          experience: Number(form.experienceWeight),
+          education: Number(form.educationWeight),
+          aiScore: Number(form.aiScoreWeight),
+        }),
       };
 
       if (isEdit) {

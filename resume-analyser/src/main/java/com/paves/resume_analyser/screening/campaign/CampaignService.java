@@ -10,8 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -43,9 +47,8 @@ public class CampaignService {
     }
 
     /** Fetches a single campaign with live stats. */
-    public CampaignResponse getCampaignWithStats(Long id) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
+    public CampaignResponse getCampaignWithStats(String id) {
+        Campaign campaign = getCampaignOrThrow(id);
         return buildResponse(campaign);
     }
 
@@ -71,9 +74,8 @@ public class CampaignService {
     }
 
     @Transactional
-    public CampaignResponse updateCampaign(Long id, CreateCampaignRequest req, String updatedBy) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
+    public CampaignResponse updateCampaign(String id, CreateCampaignRequest req, String updatedBy) {
+        Campaign campaign = getCampaignOrThrow(id);
         campaign.setRoleName(req.getRoleName());
         campaign.setJobDescription(req.getJobDescription());
         campaign.setRequiredSkills(req.getRequiredSkills());
@@ -89,25 +91,31 @@ public class CampaignService {
     }
 
     @Transactional
-    public void deleteCampaign(Long id) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
+    public void deleteCampaign(String id) {
+        Campaign campaign = getCampaignOrThrow(id);
         campaignRepository.delete(campaign);
         log.info("Deleted campaign id={}", id);
     }
 
     @Transactional
-    public CampaignResponse activateCampaign(Long id) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Campaign not found: " + id));
+    public CampaignResponse activateCampaign(String id) {
+        Campaign campaign = getCampaignOrThrow(id);
         campaign.setStatus(CampaignStatus.ACTIVE);
         log.info("Activated campaign id={}", id);
         return buildResponse(campaignRepository.save(campaign));
     }
 
     /** Placeholder for future recruitment-module integration. */
-    public String pullApplications(Long id) {
+    public String pullApplications(String id) {
+        getCampaignOrThrow(id);
         return "Pull from recruitment module initiated (integration pending)";
+    }
+
+    public List<CampaignResponse> listRecentCampaigns() {
+        return campaignRepository.findTop5ByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::buildResponse)
+                .toList();
     }
 
     /**
@@ -129,5 +137,10 @@ public class CampaignService {
                 .orElse(null);
 
         return CampaignResponse.from(c, total, completed, pending, failed, avgScore, topCandidate);
+    }
+
+    private Campaign getCampaignOrThrow(String id) {
+        return campaignRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaign not found: " + id));
     }
 }

@@ -21,6 +21,6 @@ public class RegisterRequest {
     @NotNull(message = "Role is required")
     private UserRole role;
 
-    // Only required when role = ACQUISITION
+    // Required only for branch-scoped roles (ACQUISITION / HR)
     private Long branchId;
 }

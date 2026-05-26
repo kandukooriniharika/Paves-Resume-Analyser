@@ -34,7 +34,7 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
-    // Only populated for ACQUISITION users
+    // Only populated for branch-scoped users
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")
     // FIX: reference name must match Branch.users @JsonManagedReference name

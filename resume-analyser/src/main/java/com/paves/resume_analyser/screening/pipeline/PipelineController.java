@@ -19,7 +19,7 @@ public class PipelineController {
      */
     @PostMapping("/{campaignId}")
     public ResponseEntity<ApiResponse<String>> runPipeline(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 

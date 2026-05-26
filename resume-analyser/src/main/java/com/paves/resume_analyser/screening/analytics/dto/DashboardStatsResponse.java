@@ -1,6 +1,7 @@
 package com.paves.resume_analyser.screening.analytics.dto;
 
 import com.paves.resume_analyser.screening.result.dto.CandidateRankResponse;
+import com.paves.resume_analyser.screening.campaign.dto.CampaignResponse;
 import lombok.*;
 
 import java.util.List;
@@ -31,4 +32,6 @@ public class DashboardStatsResponse {
 
     /** e.g. {"pending":12, "processing":5, "completed":80, "failed":3} */
     private Map<String, Long> queueHealth;
+
+    private List<CampaignResponse> recentCampaigns;
 }

@@ -3,7 +3,6 @@ package com.paves.resume_analyser.screening.result;
 import com.paves.resume_analyser.screening.result.dto.CandidateRankResponse;
 import com.paves.resume_analyser.screening.result.dto.HROverrideRequest;
 import com.paves.resume_analyser.screening.result.dto.ScreeningResultResponse;
-import com.paves.resume_analyser.screening.resume.ScreeningResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
@@ -11,8 +10,10 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -28,16 +29,15 @@ import java.util.stream.Collectors;
 public class ScreeningResultService {
 
     private final ScreeningResultRepository resultRepository;
-    private final ScreeningResumeRepository resumeRepository;
 
-    public Page<ScreeningResultResponse> getResults(Long campaignId, int page, int size) {
+    public Page<ScreeningResultResponse> getResults(String campaignId, int page, int size) {
         return resultRepository
                 .findByCampaignIdOrderByOverallScoreDesc(campaignId, PageRequest.of(page, size))
                 .map(ScreeningResultResponse::from);
     }
 
     /** Returns the top-10 candidates for a campaign as a ranked list. */
-    public List<CandidateRankResponse> getTopCandidates(Long campaignId) {
+    public List<CandidateRankResponse> getTopCandidates(String campaignId) {
         List<ScreeningResult> top = resultRepository
                 .findTop10ByCampaignIdOrderByOverallScoreDesc(campaignId);
         AtomicInteger rank = new AtomicInteger(1);
@@ -46,16 +46,14 @@ public class ScreeningResultService {
                 .collect(Collectors.toList());
     }
 
-    public ScreeningResultResponse getResultDetail(Long resultId) {
-        ScreeningResult result = resultRepository.findById(resultId)
-                .orElseThrow(() -> new RuntimeException("Result not found: " + resultId));
+    public ScreeningResultResponse getResultDetail(String resultId) {
+        ScreeningResult result = getResultOrThrow(resultId);
         return ScreeningResultResponse.from(result);
     }
 
     @Transactional
-    public ScreeningResultResponse hrOverride(Long resultId, HROverrideRequest req, String overrideBy) {
-        ScreeningResult result = resultRepository.findById(resultId)
-                .orElseThrow(() -> new RuntimeException("Result not found: " + resultId));
+    public ScreeningResultResponse hrOverride(String resultId, HROverrideRequest req, String overrideBy) {
+        ScreeningResult result = getResultOrThrow(resultId);
 
         result.setHrOverrideScore(req.getHrOverrideScore());
         result.setHrNotes(req.getHrNotes());
@@ -73,9 +71,8 @@ public class ScreeningResultService {
     }
 
     @Transactional
-    public ScreeningResultResponse shortlist(Long resultId, String by) {
-        ScreeningResult result = resultRepository.findById(resultId)
-                .orElseThrow(() -> new RuntimeException("Result not found: " + resultId));
+    public ScreeningResultResponse shortlist(String resultId, String by) {
+        ScreeningResult result = getResultOrThrow(resultId);
         result.setHrStatus("SHORTLISTED");
         result.setHrOverrideBy(by);
         result.setHrOverrideAt(LocalDateTime.now());
@@ -84,9 +81,8 @@ public class ScreeningResultService {
     }
 
     @Transactional
-    public ScreeningResultResponse reject(Long resultId, String by) {
-        ScreeningResult result = resultRepository.findById(resultId)
-                .orElseThrow(() -> new RuntimeException("Result not found: " + resultId));
+    public ScreeningResultResponse reject(String resultId, String by) {
+        ScreeningResult result = getResultOrThrow(resultId);
         result.setHrStatus("REJECTED");
         result.setHrOverrideBy(by);
         result.setHrOverrideAt(LocalDateTime.now());
@@ -99,7 +95,7 @@ public class ScreeningResultService {
      *
      * @param format "csv" or "xlsx" (case-insensitive)
      */
-    public byte[] export(Long campaignId, String format) throws Exception {
+    public byte[] export(String campaignId, String format) throws Exception {
         List<ScreeningResult> results = resultRepository
                 .findByCampaignIdOrderByOverallScoreDesc(campaignId);
 
@@ -172,6 +168,8 @@ public class ScreeningResultService {
                 .rank(rank)
                 .resultId(r.getId())
                 .resumeId(r.getResume() != null ? r.getResume().getId() : null)
+                .campaignId(r.getCampaign() != null ? r.getCampaign().getId() : null)
+                .roleName(r.getCampaign() != null ? r.getCampaign().getRoleName() : null)
                 .candidateName(candidateName(r))
                 .candidateEmail(candidateEmail(r))
                 .overallScore(r.getOverallScore())
@@ -207,4 +205,9 @@ public class ScreeningResultService {
     }
 
     private String nullStr(String val) { return val != null ? val : ""; }
+
+    private ScreeningResult getResultOrThrow(String resultId) {
+        return resultRepository.findById(resultId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Result not found: " + resultId));
+    }
 }

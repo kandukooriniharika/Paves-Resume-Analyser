@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CampaignResponse {
 
-    private Long id;
+    private String id;
     private String roleName;
     private String jobDescription;
     private String requiredSkills;

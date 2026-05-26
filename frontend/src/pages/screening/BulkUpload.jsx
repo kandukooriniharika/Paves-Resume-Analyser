@@ -124,7 +124,9 @@ export default function BulkUpload() {
     try {
       const res = await resumeAPI.bulkUpload(campaignId, files);
       const data = res.data;
-      const successCount = data?.successCount ?? data?.uploaded ?? data?.count ?? files.length;
+      const successCount = Array.isArray(data)
+        ? data.length
+        : data?.successCount ?? data?.uploaded ?? data?.count ?? 0;
       if (successCount > 0) {
         setUploadDone(true);
       } else {
@@ -364,7 +366,7 @@ export default function BulkUpload() {
                   <StatTile label="AI Score"  value={progress.aiScoring} color="var(--warning)" />
                   <StatTile label="Done"      value={progress.completed} color="var(--success)" />
                   <StatTile label="Failed"    value={progress.failed}    color="var(--danger)" />
-                  <StatTile label="Fraud"     value={progress.fraud}     color="#dc2626" />
+                  <StatTile label="Fraud"     value={progress.fraudFlagged} color="#dc2626" />
                 </div>
               )}
 

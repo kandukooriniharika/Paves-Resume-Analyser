@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Represents a single uploaded resume within a campaign.
@@ -19,8 +20,8 @@ import java.time.LocalDateTime;
 public class ScreeningResume {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(nullable = false, updatable = false)
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "campaign_id", nullable = false)
@@ -60,4 +61,11 @@ public class ScreeningResume {
 
     /** Set when parsing (text extraction) completes. */
     private LocalDateTime parsedAt;
+
+    @PrePersist
+    void ensureId() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+    }
 }

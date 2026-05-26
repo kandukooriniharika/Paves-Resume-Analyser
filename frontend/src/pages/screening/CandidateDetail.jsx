@@ -74,9 +74,9 @@ export default function CandidateDetail() {
       try {
         const res = await screeningAPI.getResultDetail(resultId);
         setResult(res.data);
-        setHrStatus(res.data.hrStatus ?? res.data.status);
-        if (res.data.overrideScore != null) setOverrideScore(String(res.data.overrideScore));
-        if (res.data.overrideNotes) setOverrideNotes(res.data.overrideNotes);
+        setHrStatus(res.data.hrStatus ?? null);
+        if (res.data.hrOverrideScore != null) setOverrideScore(String(res.data.hrOverrideScore));
+        if (res.data.hrNotes) setOverrideNotes(res.data.hrNotes);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load candidate detail.');
       } finally {
@@ -117,9 +117,13 @@ export default function CandidateDetail() {
     if (isNaN(score) || score < 0 || score > 100) { setOverrideError('Score must be between 0 and 100.'); return; }
     setOverriding(true);
     try {
-      await screeningAPI.hrOverride(resultId, { overrideScore: score, notes: overrideNotes });
+      await screeningAPI.hrOverride(resultId, {
+        hrOverrideScore: score,
+        hrNotes: overrideNotes,
+        hrStatus,
+      });
       setOverrideSuccess(true);
-      setResult(r => ({ ...r, overrideScore: score, overrideNotes }));
+      setResult(r => ({ ...r, hrOverrideScore: score, hrNotes: overrideNotes, overallScore: score }));
     } catch (err) {
       setOverrideError(err.response?.data?.message || 'Override failed.');
     } finally {
@@ -154,10 +158,10 @@ export default function CandidateDetail() {
 
   if (!result) return null;
 
-  const matchedSkills = result.matchedSkills ?? result.matched_skills ?? [];
-  const missingSkills = result.missingSkills ?? result.missing_skills ?? [];
-  const strengths = result.strengths ?? [];
-  const weaknesses = result.weaknesses ?? result.areasToImprove ?? [];
+  const matchedSkills = result.matchedSkillList ?? result.matchedSkills ?? result.matched_skills ?? [];
+  const missingSkills = result.missingSkillList ?? result.missingSkills ?? result.missing_skills ?? [];
+  const strengths = result.strengthList ?? result.strengths ?? [];
+  const weaknesses = result.weaknessList ?? result.weaknesses ?? result.areasToImprove ?? [];
   const aiFeedback = result.aiFeedback ?? result.ai_feedback ?? result.feedback ?? '';
   const layer1Score = result.layer1Score ?? result.l1Score;
   const layer2Score = result.layer2Score ?? result.l2Score;
@@ -199,14 +203,14 @@ export default function CandidateDetail() {
               {hrStatus && <StatusBadge status={hrStatus} size="md" />}
             </div>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              {result.email && (
+              {result.candidateEmail && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  <Mail size={13} /> {result.email}
+                  <Mail size={13} /> {result.candidateEmail}
                 </span>
               )}
-              {result.phone && (
+              {result.candidatePhone && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  <Phone size={13} /> {result.phone}
+                  <Phone size={13} /> {result.candidatePhone}
                 </span>
               )}
               {(result.currentRole || result.currentTitle) && (
@@ -337,10 +341,10 @@ export default function CandidateDetail() {
               </h4>
 
               {/* Show existing override */}
-              {result.overrideScore != null && !overrideSuccess && (
+              {result.hrOverrideScore != null && !overrideSuccess && (
                 <div style={{ padding: '10px 12px', background: 'var(--accent-light)', borderRadius: 'var(--radius-sm)', marginBottom: '12px', fontSize: '0.82rem', color: 'var(--accent-nav)' }}>
-                  <p><strong>Override Score:</strong> {result.overrideScore}</p>
-                  {result.overrideNotes && <p style={{ marginTop: '4px' }}><strong>Notes:</strong> {result.overrideNotes}</p>}
+                  <p><strong>Override Score:</strong> {result.hrOverrideScore}</p>
+                  {result.hrNotes && <p style={{ marginTop: '4px' }}><strong>Notes:</strong> {result.hrNotes}</p>}
                 </div>
               )}
 

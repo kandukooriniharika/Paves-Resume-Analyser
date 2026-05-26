@@ -8,15 +8,15 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ScreeningResumeRepository extends JpaRepository<ScreeningResume, Long> {
+public interface ScreeningResumeRepository extends JpaRepository<ScreeningResume, String> {
 
-    List<ScreeningResume> findByCampaignIdOrderByUploadedAtDesc(Long campaignId);
+    List<ScreeningResume> findByCampaignIdOrderByUploadedAtDesc(String campaignId);
 
-    long countByCampaignId(Long campaignId);
+    long countByCampaignId(String campaignId);
 
-    long countByCampaignIdAndStatus(Long campaignId, ResumeStatus status);
+    long countByCampaignIdAndStatus(String campaignId, ResumeStatus status);
 
-    long countByCampaignIdAndFraudFlagged(Long campaignId, boolean fraudFlagged);
+    long countByCampaignIdAndFraudFlagged(String campaignId, boolean fraudFlagged);
 
     /**
      * Returns resumes for a campaign whose status is in the provided list.
@@ -24,8 +24,8 @@ public interface ScreeningResumeRepository extends JpaRepository<ScreeningResume
      */
     @Query("SELECT r FROM ScreeningResume r WHERE r.campaign.id = :cid AND r.status IN :statuses")
     List<ScreeningResume> findByCampaignIdAndStatusIn(
-            @Param("cid") Long campaignId,
+            @Param("cid") String campaignId,
             @Param("statuses") List<ResumeStatus> statuses);
 
-    long countByCampaignIdAndStatusIn(Long campaignId, List<ResumeStatus> statuses);
+    long countByCampaignIdAndStatusIn(String campaignId, List<ResumeStatus> statuses);
 }

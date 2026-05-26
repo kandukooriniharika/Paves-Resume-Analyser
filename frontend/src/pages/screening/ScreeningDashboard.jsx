@@ -53,10 +53,10 @@ export default function ScreeningDashboard() {
     })();
   }, []);
 
-  const stats = data?.stats ?? {};
+  const stats = data ?? {};
   const topCandidates = data?.topCandidates ?? [];
   const recentJobRoles = data?.recentCampaigns ?? data?.recentJobRoles ?? [];
-  const pipelineHealth = data?.pipelineHealth ?? {};
+  const pipelineHealth = data?.queueHealth ?? data?.pipelineHealth ?? {};
 
   return (
     <div className="page-container animate-fadeUp">
@@ -94,7 +94,7 @@ export default function ScreeningDashboard() {
           <StatCard label="Total Job Roles"     value={stats.totalJobRoles ?? stats.totalCampaigns}     icon={Briefcase}   tone="blue"   />
           <StatCard label="Active Screenings"   value={stats.activeScreenings ?? stats.activeCampaigns} icon={Loader}      tone="yellow" />
           <StatCard label="Total Screened"      value={stats.totalScreened ?? stats.totalResumes}        icon={Users}       tone="violet" />
-          <StatCard label="Avg ATS Score"       value={stats.avgAtsScore != null ? `${stats.avgAtsScore}%` : '—'} icon={TrendingUp} tone="green" />
+          <StatCard label="Avg ATS Score"       value={stats.avgScore != null ? `${stats.avgScore}%` : '—'} icon={TrendingUp} tone="green" />
         </div>
       )}
 
@@ -194,11 +194,11 @@ export default function ScreeningDashboard() {
               <tbody>
                 {topCandidates.map((c, idx) => (
                   <tr
-                    key={c.id ?? idx}
-                    onClick={() => c.id && navigate(`/screening/results/${c.id}`)}
+                    key={c.resultId ?? idx}
+                    onClick={() => c.resultId && navigate(`/screening/results/${c.resultId}`)}
                     style={{
                       borderBottom: '1px solid var(--border-subtle)',
-                      cursor: c.id ? 'pointer' : 'default',
+                      cursor: c.resultId ? 'pointer' : 'default',
                       transition: 'background 0.12s',
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
@@ -206,10 +206,10 @@ export default function ScreeningDashboard() {
                   >
                     <td style={{ padding: '10px 12px' }}>
                       <p style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{c.candidateName}</p>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.email}</p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.candidateEmail}</p>
                     </td>
                     <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{c.roleName ?? c.campaignName ?? '—'}</td>
-                    <td style={{ padding: '10px 12px' }}><ScoreChip score={c.atsScore ?? c.finalScore} /></td>
+                    <td style={{ padding: '10px 12px' }}><ScoreChip score={c.overallScore ?? c.atsScore ?? c.finalScore} /></td>
                     <td style={{ padding: '10px 12px' }}><StatusBadge status={c.recommendation} size="xs" /></td>
                     <td style={{ padding: '10px 12px' }}><StatusBadge status={c.hrStatus ?? c.status} size="xs" /></td>
                   </tr>

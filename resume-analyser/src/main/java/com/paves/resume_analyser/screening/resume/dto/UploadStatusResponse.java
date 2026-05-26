@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 public class UploadStatusResponse {
 
-    private Long campaignId;
+    private String campaignId;
     private long total;
     private long parsing;
     private long layer1;

@@ -43,7 +43,7 @@ public class CampaignController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CampaignResponse>> getCampaign(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -52,7 +52,7 @@ public class CampaignController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CampaignResponse>> updateCampaign(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody CreateCampaignRequest req,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
@@ -63,7 +63,7 @@ public class CampaignController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteCampaign(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -77,7 +77,7 @@ public class CampaignController {
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<ApiResponse<CampaignResponse>> activateCampaign(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -87,7 +87,7 @@ public class CampaignController {
 
     @PostMapping("/{id}/pull-applications")
     public ResponseEntity<ApiResponse<String>> pullApplications(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 

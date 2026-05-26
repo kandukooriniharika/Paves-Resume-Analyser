@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CampaignRepository extends JpaRepository<Campaign, Long> {
+public interface CampaignRepository extends JpaRepository<Campaign, String> {
 
     Page<Campaign> findByStatus(CampaignStatus status, Pageable pageable);
 
@@ -17,4 +17,6 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     long countByStatus(CampaignStatus status);
 
     long countByBranchId(Long branchId);
+
+    java.util.List<Campaign> findTop5ByOrderByCreatedAtDesc();
 }

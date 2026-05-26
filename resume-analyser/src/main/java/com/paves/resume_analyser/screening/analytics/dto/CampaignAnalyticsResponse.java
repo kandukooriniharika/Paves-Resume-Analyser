@@ -10,7 +10,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class CampaignAnalyticsResponse {
 
-    private Long campaignId;
+    private String campaignId;
     private String roleName;
     private String status;
 

@@ -23,7 +23,7 @@ public class ResumeController {
      */
     @PostMapping("/bulk-upload")
     public ResponseEntity<ApiResponse<List<ResumeResponse>>> bulkUpload(
-            @RequestParam("campaignId") Long campaignId,
+            @RequestParam("campaignId") String campaignId,
             @RequestParam("files") List<MultipartFile> files,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) throws Exception {
@@ -35,7 +35,7 @@ public class ResumeController {
 
     @GetMapping("/{campaignId}")
     public ResponseEntity<ApiResponse<List<ResumeResponse>>> listResumes(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -44,7 +44,7 @@ public class ResumeController {
 
     @GetMapping("/upload-status/{campaignId}")
     public ResponseEntity<ApiResponse<UploadStatusResponse>> getUploadStatus(
-            @PathVariable Long campaignId,
+            @PathVariable String campaignId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 
@@ -53,7 +53,7 @@ public class ResumeController {
 
     @DeleteMapping("/detail/{resumeId}")
     public ResponseEntity<ApiResponse<Void>> deleteResume(
-            @PathVariable Long resumeId,
+            @PathVariable String resumeId,
             @RequestHeader(value = "X-User-Name", defaultValue = "system") String userName,
             @RequestHeader(value = "X-User-Role", defaultValue = "GENERAL") String userRole) {
 

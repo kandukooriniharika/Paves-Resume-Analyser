@@ -81,7 +81,7 @@ export default function CandidateList() {
         campaignAPI.getById(campaignId),
       ]);
       if (resultsRes.status === 'fulfilled') {
-        setResults(resultsRes.value.data?.content ?? resultsRes.value.data ?? []);
+        setResults(resultsRes.value.data?.content ?? []);
       } else {
         setError(resultsRes.reason?.response?.data?.message || 'Failed to load candidates.');
       }
@@ -96,7 +96,7 @@ export default function CandidateList() {
   // Filter + sort
   const filtered = results.filter(r => {
     const name = r.candidateName ?? r.name ?? '';
-    const email = r.email ?? '';
+    const email = r.candidateEmail ?? r.email ?? '';
     const matchSearch = !search ||
       name.toLowerCase().includes(search.toLowerCase()) ||
       email.toLowerCase().includes(search.toLowerCase());
@@ -115,8 +115,8 @@ export default function CandidateList() {
       av = order[a.recommendation] ?? 9;
       bv = order[b.recommendation] ?? 9;
     } else {
-      av = a.finalScore ?? a.atsScore ?? 0;
-      bv = b.finalScore ?? b.atsScore ?? 0;
+      av = a.overallScore ?? a.atsScore ?? 0;
+      bv = b.overallScore ?? b.atsScore ?? 0;
     }
     if (av < bv) return sortDir === 'asc' ? -1 : 1;
     if (av > bv) return sortDir === 'asc' ? 1 : -1;
@@ -341,13 +341,13 @@ export default function CandidateList() {
                         <p style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
                           {r.candidateName ?? r.name ?? '—'}
                         </p>
-                        {r.phone && <p style={{ fontSize: '0.73rem', color: 'var(--text-tertiary)' }}>{r.phone}</p>}
+                        {r.candidatePhone && <p style={{ fontSize: '0.73rem', color: 'var(--text-tertiary)' }}>{r.candidatePhone}</p>}
                       </td>
                       <td style={{ padding: '12px 14px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
-                        {r.email ?? '—'}
+                        {r.candidateEmail ?? '—'}
                       </td>
                       <td style={{ padding: '12px 14px' }}>
-                        <ScoreCell score={r.finalScore ?? r.atsScore} />
+                        <ScoreCell score={r.overallScore ?? r.atsScore} />
                       </td>
                       <td style={{ padding: '12px 14px' }}>
                         <StatusBadge status={r.recommendation} size="sm" />
