@@ -2,6 +2,7 @@ package com.paves.resume_analyser.screening.result;
 
 import com.paves.resume_analyser.screening.campaign.Campaign;
 import com.paves.resume_analyser.screening.resume.ScreeningResume;
+import com.paves.resume_analyser.screening.workflow.CandidateStage;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -74,6 +75,17 @@ public class ScreeningResult {
     private String fraudDetails;
 
     // ── HR Override fields ──────────────────────────────────────────────────
+
+    /** Recruiter-managed pipeline stage (UPLOADED → SCREENING → SHORTLISTED → HM_REVIEW → INTERVIEW → SELECTED/REJECTED). */
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private CandidateStage candidateStage = CandidateStage.UPLOADED;
+
+    private String stageChangedBy;
+    private java.time.LocalDateTime stageChangedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
 
     private Double hrOverrideScore;
 

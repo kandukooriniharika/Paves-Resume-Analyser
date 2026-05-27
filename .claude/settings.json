@@ -13,7 +13,13 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" -Recurse -File)",
       "Bash(Select-Object FullName)",
       "Bash(Sort-Object FullName)",
-      "Bash(echo \"Deleted frontend legacy files\")"
+      "Bash(echo \"Deleted frontend legacy files\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\niharika\\\\Downloads\\\\Paves\\\\Paves Resume Analyser\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Get-ChildItem -Recurse -Include \"*.java\")",
+      "Bash(Measure-Object)",
+      "Bash(Select-Object -ExpandProperty Count)"
     ]
   }
 }

@@ -11,6 +11,9 @@ import com.paves.resume_analyser.screening.result.ScreeningResultRepository;
 import com.paves.resume_analyser.screening.resume.ResumeStatus;
 import com.paves.resume_analyser.screening.resume.ScreeningResume;
 import com.paves.resume_analyser.screening.resume.ScreeningResumeRepository;
+import com.paves.resume_analyser.screening.talentpool.CandidateSource;
+import com.paves.resume_analyser.screening.talentpool.TalentPoolService;
+import com.paves.resume_analyser.screening.workflow.CandidateStage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,6 +43,7 @@ public class PipelineService {
     private final ResumeParserService parserService;
     private final Layer1FilterService layer1Service;
     private final AIScreeningClient aiClient;
+    private final TalentPoolService talentPoolService;
 
     /**
      * Runs the full screening pipeline asynchronously for all PENDING/FAILED resumes
@@ -181,10 +185,19 @@ public class PipelineService {
                 .seniority(seniority)
                 .build();
 
+        result.setCandidateStage(CandidateStage.SHORTLISTED);
         resultRepo.save(result);
         resume.setStatus(ResumeStatus.COMPLETED);
         resume.setParsedAt(LocalDateTime.now());
         resumeRepo.save(resume);
+
+        // Upsert into reusable talent pool
+        try {
+            talentPoolService.upsertFromResult(result, CandidateSource.MANUAL);
+        } catch (Exception e) {
+            log.warn("Talent pool upsert failed for resume id={}: {}", resume.getId(), e.getMessage());
+        }
+
         log.info("Processed resume id={} score={}", resume.getId(), round1(overallScore));
     }
 

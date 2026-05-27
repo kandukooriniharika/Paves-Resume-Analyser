@@ -1,5 +1,6 @@
 package com.paves.resume_analyser.screening.result;
 
+import com.paves.resume_analyser.screening.workflow.CandidateStage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +28,10 @@ public interface ScreeningResultRepository extends JpaRepository<ScreeningResult
     long countByCampaignIdAndRecommendation(String campaignId, Recommendation recommendation);
 
     long countByCampaignIdAndHrStatus(String campaignId, String hrStatus);
+
+    List<ScreeningResult> findByCampaignIdAndCandidateStage(String campaignId, CandidateStage stage);
+
+    long countByCampaignIdAndCandidateStage(String campaignId, CandidateStage stage);
 
     @Query("SELECT AVG(r.overallScore) FROM ScreeningResult r WHERE r.campaign.id = :cid")
     Double avgScoreByCampaignId(@Param("cid") String campaignId);

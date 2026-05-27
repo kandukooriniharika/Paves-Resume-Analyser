@@ -4,12 +4,14 @@ import useAuthStore from '../store/authStore';
 
 const BASE = '/api/screening';
 
-// Map legacy app roles (HEAD/ACQUISITION) to screening module roles (ADMIN/HR)
 function mapRole(role) {
-  if (!role) return 'GENERAL';
-  if (role === 'HEAD') return 'ADMIN';
-  if (role === 'ACQUISITION') return 'HR';
-  return role;
+  if (!role) return 'RECRUITER';
+  // Pass new roles straight through
+  if (['HR_ADMIN', 'RECRUITER', 'HIRING_MANAGER'].includes(role)) return role;
+  // Legacy role mapping (keep backward compat during migration)
+  if (role === 'HEAD' || role === 'ADMIN') return 'HR_ADMIN';
+  if (role === 'HR' || role === 'ACQUISITION') return 'RECRUITER';
+  return 'RECRUITER';
 }
 
 function headers() {
@@ -95,6 +97,84 @@ export const screeningAPI = {
 export const analyticsAPI = {
   dashboard: ()           => api.get('/analytics/dashboard'),
   campaign:  (campaignId) => api.get(`/analytics/campaign/${campaignId}`),
+};
+
+// ── JD Management (HR_ADMIN) ─────────────────────────────────────────────────
+const jdBase = axios.create({ baseURL: '/api/jd', timeout: 60000 });
+jdBase.interceptors.request.use(cfg => {
+  const { token, user } = useAuthStore.getState();
+  if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+  cfg.headers['X-User-Role'] = mapRole(user?.role);
+  cfg.headers['X-User-Name'] = user?.full_name ?? user?.email ?? 'system';
+  return cfg;
+});
+jdBase.interceptors.response.use(r => { r.data = unwrapApiResponse(r.data); return r; });
+
+export const jdAPI = {
+  listAll:       ()              => jdBase.get('/'),
+  listActive:    ()              => jdBase.get('/active'),
+  getById:       (id)            => jdBase.get(`/${id}`),
+  createFromText: (params)       => jdBase.post('/text', null, { params }),
+  createFromFile: (formData, params) =>
+    jdBase.post('/upload', formData, { params }),
+  newVersion:    (id, params)    => jdBase.post(`/${id}/version`, null, { params }),
+  activate:      (id)            => jdBase.patch(`/${id}/activate`),
+  archive:       (id)            => jdBase.patch(`/${id}/archive`),
+};
+
+// ── Workflow Stage Management ─────────────────────────────────────────────────
+const workflowBase = axios.create({ baseURL: '/api/workflow', timeout: 30000 });
+workflowBase.interceptors.request.use(cfg => {
+  const { token, user } = useAuthStore.getState();
+  if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+  cfg.headers['X-User-Role'] = mapRole(user?.role);
+  cfg.headers['X-User-Name'] = user?.full_name ?? user?.email ?? 'system';
+  return cfg;
+});
+workflowBase.interceptors.response.use(r => { r.data = unwrapApiResponse(r.data); return r; });
+
+export const workflowAPI = {
+  moveStage:    (resultId, body) => workflowBase.patch(`/results/${resultId}/stage`, body),
+  getByStage:   (campaignId, stage) => workflowBase.get(`/campaigns/${campaignId}/stages/${stage}`),
+  listStages:   ()               => workflowBase.get('/stages'),
+};
+
+// ── Talent Pool ───────────────────────────────────────────────────────────────
+const talentBase = axios.create({ baseURL: '/api/talent-pool', timeout: 30000 });
+talentBase.interceptors.request.use(cfg => {
+  const { token, user } = useAuthStore.getState();
+  if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+  cfg.headers['X-User-Role'] = mapRole(user?.role);
+  cfg.headers['X-User-Name'] = user?.full_name ?? user?.email ?? 'system';
+  return cfg;
+});
+talentBase.interceptors.response.use(r => { r.data = unwrapApiResponse(r.data); return r; });
+
+export const talentPoolAPI = {
+  list:           (page = 0, size = 20) => talentBase.get('/', { params: { page, size } }),
+  search:         (q)                   => talentBase.get('/search', { params: { q } }),
+  semanticSearch: (q, campaignId, topK) => talentBase.get('/semantic-search', { params: { q, campaignId, topK } }),
+  byScore:        (minScore)            => talentBase.get('/by-score', { params: { minScore } }),
+  bySource:       (source)              => talentBase.get(`/by-source/${source}`),
+};
+
+// ── Naukri Import ─────────────────────────────────────────────────────────────
+const intakeBase = axios.create({ baseURL: '/api/intake', timeout: 120000 });
+intakeBase.interceptors.request.use(cfg => {
+  const { token, user } = useAuthStore.getState();
+  if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+  cfg.headers['X-User-Role'] = mapRole(user?.role);
+  return cfg;
+});
+intakeBase.interceptors.response.use(r => { r.data = unwrapApiResponse(r.data); return r; });
+
+export const intakeAPI = {
+  importNaukri: (campaignId, xlsxFile) => {
+    const form = new FormData();
+    form.append('campaignId', campaignId);
+    form.append('file', xlsxFile);
+    return intakeBase.post('/naukri/import', form, { params: { campaignId } });
+  },
 };
 
 export default api;

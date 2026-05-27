@@ -5,6 +5,7 @@ import re
 from typing import Optional
 import fitz  # PyMuPDF
 from models.schemas import ParseResumeRequest, ParsedResumeResponse, CandidateData
+from services.skill_normalizer import normalize_list
 
 class ResumeParserService:
 
@@ -82,7 +83,7 @@ class ResumeParserService:
                         'azure', 'gcp', 'machine learning', 'deep learning', 'nlp', 'tensorflow', 'pytorch',
                         'fastapi', 'django', 'flask', 'git', 'ci/cd', 'agile', 'scrum', 'microservices']
         text_lower = text.lower()
-        found_skills = [s for s in common_skills if s in text_lower]
+        found_skills = normalize_list([s for s in common_skills if s in text_lower])
 
         # Experience years (e.g., "5 years", "5+ years")
         exp_match = re.search(r'(\d+)\+?\s*years?\s*(of\s*)?(experience|exp)', text, re.IGNORECASE)

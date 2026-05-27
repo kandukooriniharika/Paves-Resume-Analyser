@@ -154,6 +154,50 @@ public class AIScreeningClient {
     }
 
     /**
+     * Calls {@code POST /ai/parse-jd} with the raw JD text.
+     * Returns extracted fields: required_skills, nice_to_have, min_experience, max_experience.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> parseJd(String jdText) {
+        try {
+            Map<String, Object> body = Map.of("jd_text", jdText);
+            Map<String, Object> result = client.post()
+                    .uri("/ai/parse-jd")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            return result != null ? result : Map.of();
+        } catch (WebClientException e) {
+            log.warn("parseJd call failed: {}", e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
+     * Calls {@code POST /ai/semantic-search} to find candidates matching a natural-language query.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> semanticSearch(String query, String campaignId, int topK) {
+        try {
+            Map<String, Object> body = java.util.HashMap.newHashMap(3);
+            body.put("query", query);
+            if (campaignId != null) body.put("campaign_id", campaignId);
+            body.put("top_k", topK);
+            Map<String, Object> result = client.post()
+                    .uri("/ai/semantic-search")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            return result != null ? result : Map.of();
+        } catch (WebClientException e) {
+            log.warn("semanticSearch call failed: {}", e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
      * Performs a lightweight health check against {@code GET /health}.
      *
      * @return true if the AI service responds with HTTP 2xx

@@ -5,27 +5,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Arrays;
 
 public enum UserRole {
-    HEAD,
-    ACQUISITION,
-    ADMIN,
-    HR,
-    GENERAL;
+    HR_ADMIN,       // Creates JDs, campaigns, configures weights, overrides AI decisions, full access
+    RECRUITER,      // Uploads resumes, manages candidate pipeline, shortlists candidates
+    HIRING_MANAGER; // Reviews shortlisted candidates, approves/rejects, finalises decisions
 
     @JsonCreator
     public static UserRole fromValue(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
+        if (value == null || value.isBlank()) return null;
         return Arrays.stream(values())
-                .filter(role -> role.name().equalsIgnoreCase(value))
+                .filter(r -> r.name().equalsIgnoreCase(value.replace("-", "_")))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Invalid role '" + value + "'. Allowed values: HEAD, ACQUISITION, ADMIN, HR, GENERAL"
-                ));
-    }
-
-    public boolean requiresBranch() {
-        return this == ACQUISITION || this == HR;
+                        "Invalid role '" + value + "'. Allowed: HR_ADMIN, RECRUITER, HIRING_MANAGER"));
     }
 }
